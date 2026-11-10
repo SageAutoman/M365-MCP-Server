@@ -8,6 +8,9 @@ Intel/AMD 电脑解压 `m365-mcp-windows-local-go-amd64.zip`，Windows ARM 电�
 `m365-mcp-windows-local-go-arm64.zip`，将程序放在固定目录。无需 Python、Docker、管理员权限或
 Client Secret。安装前用 `SHA256SUMS.txt` 核对压缩包。
 
+若下载单 EXE 的 Artifact，先将程序重命名为 `m365-mcp-windows-local-go.exe`，
+再使用下文命令。
+
 ## 配置 Microsoft 登录
 
 1. 在 Microsoft Entra 注册应用，选择需要支持的账户类型。

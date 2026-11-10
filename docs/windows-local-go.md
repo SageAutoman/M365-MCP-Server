@@ -9,6 +9,9 @@ Extract `m365-mcp-windows-local-go-amd64.zip` for Intel/AMD PCs, or
 in a stable folder. Python, Docker, administrator access, and a client secret
 are not required. Check the archive against `SHA256SUMS.txt` before installing.
 
+If downloading a single-EXE artifact, rename its executable to
+`m365-mcp-windows-local-go.exe` before following the commands below.
+
 ## Register Microsoft sign-in
 
 1. Create a Microsoft Entra app registration for the intended account type.

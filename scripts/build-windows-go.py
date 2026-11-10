@@ -28,7 +28,7 @@ def json_stream(value: str):
 def dependency_notices(go: str, environment: dict[str, str]) -> str:
     result = subprocess.run(
         [go, "list", "-deps", "-json", "."], cwd=NATIVE, env=environment,
-        check=True, text=True, capture_output=True,
+        check=True, text=True, encoding="utf-8", capture_output=True,
     )
     modules = {}
     for package in json_stream(result.stdout):

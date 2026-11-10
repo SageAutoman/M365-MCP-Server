@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.12'
+          check-latest: true
       - name: Validate stable release tag and reviewed ancestry
         env:
           RELEASE_TAG: ${{ github.ref_name }}
