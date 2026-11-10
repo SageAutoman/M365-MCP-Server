@@ -427,11 +427,17 @@ def register_mail_tools(
         limit: int = 25,
         date_from: Annotated[
             str | None,
-            Field(format="date-time", description="ISO 8601 timestamp with timezone"),
+            Field(
+                json_schema_extra={"format": "date-time"},
+                description="ISO 8601 timestamp with timezone",
+            ),
         ] = None,
         date_to: Annotated[
             str | None,
-            Field(format="date-time", description="ISO 8601 timestamp with timezone"),
+            Field(
+                json_schema_extra={"format": "date-time"},
+                description="ISO 8601 timestamp with timezone",
+            ),
         ] = None,
     ) -> dict[str, Any]:
         return await audited(

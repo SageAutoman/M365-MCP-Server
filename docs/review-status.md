@@ -33,7 +33,7 @@
   completion page that launches the private callback URI, attempts to close the
   tab, removes callback parameters from visible browser history, and retains a
   manual fallback. Loopback and HTTPS clients retain the normal redirect.
-- Windows local integration build: add a .NET 8 NativeAOT MCP stdio host with
+- Windows local integration build: add a .NET 10 NativeAOT MCP stdio host with
   public-client PKCE login, current-user DPAPI state, ephemeral mode, ten
   bounded mail tools, and a CI-produced single Windows x64 executable.
 
@@ -41,7 +41,8 @@
 
 Unit and integration tests exercise the real ASGI/FastMCP stack with mocked
 Entra metadata, OBO and Graph transport. Docker smoke tests use the installed
-non-root production image. Builds and tests run exclusively in GitHub Actions.
+non-root production image. All Python, Docker, and native Windows builds/tests
+run in GitHub Actions; local tests are prohibited in the editing environment.
 The mocked WorkBuddy client flow follows the 401 discovery challenge through
 DCR, S256 authorization, an Entra callback, local token exchange, authenticated
 MCP initialization, refresh-token rotation and another authenticated MCP call.

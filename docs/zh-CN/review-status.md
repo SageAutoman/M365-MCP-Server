@@ -21,7 +21,7 @@
 - OAuth 完成页体验：WorkBuddy Callback 使用 No-store、CSP 保护的完成页启动
   Private Callback URI，尝试自动关闭标签页，从可见浏览器历史中移除 Callback
   参数，并保留手动返回入口；Loopback 与 HTTPS Client 仍使用正常 Redirect。
-- Windows 本地集成构建：增加 .NET 8 NativeAOT MCP stdio Host，支持 Public-client
+- Windows 本地集成构建：增加 .NET 10 NativeAOT MCP stdio Host，支持 Public-client
   PKCE 登录、当前用户 DPAPI 状态、Ephemeral Mode、十个有边界的邮件工具，以及
   CI 生成的单个 Windows x64 可执行文件。
 

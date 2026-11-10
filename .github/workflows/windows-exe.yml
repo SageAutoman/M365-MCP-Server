@@ -14,11 +14,11 @@ jobs:
   build-windows-local:
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6.1.0
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
       - name: Publish native single executable
         shell: pwsh
         run: >
@@ -183,7 +183,7 @@ jobs:
             throw "Ephemeral runtime created undeclared files: $($unexpected.FullName -join ', ')"
           }
       - name: Upload Windows executable
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: m365-mcp-windows-x64
           path: artifacts/windows-x64/m365-mcp.exe

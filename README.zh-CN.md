@@ -50,6 +50,12 @@ Attestation 可核验来源，但不会覆盖杀毒软件的判定。
 MD5 和 SHA-1 仅用于兼容旧式白名单表单，不是可信性验证；EXE 改变后须重新计算
 哈希并审核白名单。
 
+### Windows 本机 Go 程序
+
+[Go 版](docs/zh-CN/windows-local-go.md)通过独立的 `windows-local-go` 流水线
+生成 AMD64、ARM64 单文件 EXE，支持浏览器登录、stdio、本机鉴权 HTTP 和附件文本提取。
+原有 NativeAOT 流水线和发布产物继续保留。
+
 ## 发布与验证状态
 
 | 范围 | 状态 |
@@ -62,7 +68,7 @@ MD5 和 SHA-1 仅用于兼容旧式白名单表单，不是可信性验证；EXE
 | Windows SHA-256 与 Provenance Attestation | 已随 v0.1.1 发布并核验 |
 | 稳定版 `v0.1.1` GitHub Release | [已发布](https://github.com/sagehou/M365-MCP-Server/releases/tag/v0.1.1) |
 
-GitHub Actions 是本仓库唯一的构建与测试环境。
+GitHub Actions 是本仓库唯一的构建与测试环境。此编辑环境禁止创建测试环境、安装测试依赖或执行本地构建和测试。
 
 ## 后续工作
 

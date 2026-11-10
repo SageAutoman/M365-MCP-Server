@@ -2,58 +2,84 @@
 
 # 运行时依赖审计
 
-本文记录 FastMCP 4 迁移的依赖边界。版本来自 2026-09-17 GitHub Actions
-实际解析结果，不是根据版本范围推测的估计值。
+Python 运行时及开发依赖在 `pyproject.toml` 中固定版本，`uv.lock` 记录完整解析结果及
+分发文件哈希。CI 和生产镜像共同使用 `uv sync --frozen` 安装。
 
 ## 实际解析版本
 
-| Package | 关系 | 迁移前 | 迁移后 |
-| --- | --- | ---: | ---: |
-| `fastmcp` | 直接依赖，MCP Runtime | 2.14.7 | 4.0.4 |
-| `fastmcp-slim` | 由 `fastmcp` 传递引入 | 未安装 | 4.0.4 |
-| `mcp` | 由 `fastmcp` 传递引入 | 1.30.0 | 2.2.0 |
-| `mcp-types` | 由 MCP/FastMCP 传递引入 | 未安装 | 2.2.0 |
-| `authlib` | 由 FastMCP 传递引入 | 1.8.0 | 1.8.0 |
-| `joserfc` | 由 FastMCP 传递引入 | 1.7.5 | 1.7.5 |
-| `httpx` | 直接依赖，Graph/OIDC Client | 0.28.1 | 0.28.1 |
-| `httpx2` | FastMCP HTTP Stack 传递依赖 | 未安装 | 2.13.0 |
-| `msal` | 直接依赖，Entra OBO Client | 1.38.0 | 1.38.0 |
-| `PyJWT` | 直接依赖，JWT Validation | 2.14.0 | 2.14.0 |
-| `fastapi` | 直接依赖，ASGI Application | 0.141.1 | 0.141.1 |
-| `starlette` | 由 FastAPI/FastMCP 传递引入 | 1.6.0 | 1.6.0 |
-| `pydantic` | 直接依赖，Models/Settings | 2.13.5 | 2.13.5 |
+| Package | 实际解析版本 |
+| --- | ---: |
+| `cryptography` | 50.0.2 |
+| `fastapi` | 0.162.2 |
+| `fastmcp` / `fastmcp-slim` | 4.1.7 |
+| `mcp` / `mcp-types` | 2.3.0 |
+| `authlib` | 1.9.5 |
+| `joserfc` | 1.8.0 |
+| `httpx` | 0.28.1 |
+| `httpx2` | 2.16.0 |
+| `msal` | 1.39.0 |
+| `PyJWT` | 2.15.1 |
+| `pypdf` | 7.0.0 |
+| `python-docx` | 1.2.0 |
+| `openpyxl` | 3.1.5 |
+| `python-pptx` | 1.0.2 |
+| `pydantic` | 2.14.3 |
+| `pydantic-settings` | 2.16.2 |
+| `starlette` | 1.10.0 |
+| `uvicorn` | 0.54.0 |
+| `pytest` | 9.2.0 |
+| `pip-audit` | 2.10.1 |
 
 项目有意同时保留两套 HTTP Client。项目自身的 Graph 和 OpenID Connect
 请求继续使用直接依赖 `httpx`；FastMCP 4 与 MCP SDK v2 内部使用独立的传递依赖
 `httpx2`。两者责任方不同，不是意外的重复依赖。
 
-本次接受的依赖约束为 `fastmcp==4.0.4`、`fastapi>=0.133,<1` 和
-`pydantic>=2.12,<3`。精确锁定 FastMCP 使本次 Runtime Migration 可复现，
-其他现有范围仍可获得兼容的维护版本。
+构建依赖为 `setuptools==84.2.1`、`wheel==0.48.0`，安装工具为 `uv==0.13.7`。
+Python 保持受支持的 3.12 运行时边界。pypdf 升级到 7，移除了阻止
+[GHSA-59jv-x5x2-gg4c](https://github.com/py-pdf/pypdf/security/advisories/GHSA-59jv-x5x2-gg4c)
+安全修复的旧版本上限。
 
 ## 兼容性证据
 
-迁移审计未发现项目使用已移除的 FastMCP API。现有 ASGI Mount、Stateless
-HTTP 配置、Tool Error Boundary 和 Request Dependency Helper 都继续通过生产
-Application Factory 接受测试。
+CI 已配置为使用锁定依赖运行完整 Python 测试及 `pip-audit --skip-editable`，此次升级仍需
+通过 CI 验证。测试继续覆盖生产 Application Factory、真实 ASGI/MCP Transport、
+OAuth Refresh Rotation 和 Mock Graph/OBO 流程。日期 Schema 元数据已改用 Pydantic 支持的
+`json_schema_extra` API。
 
-GitHub Actions 在同一端点覆盖两代协议：
+测试在同一端点覆盖两代协议：
 
 - Legacy `2025-03-26`：initialize、tools/list、全部 11 个 Mail Tools、
   Sanitized Failure，以及 Alice/Bob 并发身份隔离。
 - Modern `2026-07-28`：携带 Request Metadata 且无 MCP Session ID 的
   server/discover、tools/list 和 tools/call。
-- 完整 Unit/Integration Suite、Production Docker Image、Health Endpoint、
-  Non-root Worker Startup 和 Docker Compose Smoke Path。
+- 完整 Unit/Integration Suite，包括 Health、未认证 MCP 拒绝和隔离附件解析检查。
 
-Container Smoke Test 还会拒绝包含已知 Authlib JOSE 和 HTTPX 迁移告警的生产
-启动日志。它不会隐藏 Warning、降级 Authlib、修改已安装包或保留 FastMCP 2。
+CI 另外构建并 Smoke-test 生产 Docker Image、Non-root Worker 和 Compose 配置，脚本继续
+拒绝已知 Authlib JOSE、HTTPX 迁移告警。所有构建和测试必须在 CI 中执行，此编辑环境禁止
+创建测试环境或运行本地测试。
 
-迁移前快照见 [GitHub Actions run 35195153651](https://github.com/sagehou/M365-MCP-Server/actions/runs/35195153651)。
-迁移成功快照见 [GitHub Actions run 35195810661](https://github.com/sagehou/M365-MCP-Server/actions/runs/35195810661)。
+FastMCP 4 历史迁移证据：[迁移前](https://github.com/sagehou/M365-MCP-Server/actions/runs/35195153651)、
+[迁移后](https://github.com/sagehou/M365-MCP-Server/actions/runs/35195810661)。
 
 ## 范围边界
 
-本阶段只变更 MCP Runtime。Authentication 仍要求 Client 提供 Bearer Token，
-随后执行现有 Entra OBO Exchange。本次迁移不增加 OAuth Discovery、Dynamic
-Client Registration 或 Browser Sign-in。
+Python 服务保留 Bearer Validation、Entra OBO 和原有 Feature Flag 后的 OAuth 服务。
+[Windows 本机单用户版](windows-local-go.md) 使用独立 Go Module 和公共客户端浏览器登录，
+不内置服务器凭据，也不替代多用户服务。Go 版本和依赖校验值记录在 `native/go.mod`、
+`native/go.sum` 中。
+
+原有 NativeAOT Windows 主机和流水线继续保留，SDK/运行时目标从 .NET 8 升级为 .NET 10 LTS；
+它没有直接 NuGet 依赖。两套 Windows 流水线同步升级 GitHub Actions 依赖。Go 产物名包含
+`windows-local-go`，不会替换原有 Windows 发布文件。
+
+Go Module 为 [GO-2026-5932](https://pkg.go.dev/vuln/GO-2026-5932) 固定了上游
+`x/crypto` 修复提交 `v0.58.1-0.20261009181718-2f1f834330b2`，该提交移除了停止维护的
+OpenPGP 包；本程序不导入 OpenPGP。
+
+依赖和锁文件更新后，必须通过 CI 执行 `uv sync --frozen --extra dev`、完整测试及
+`pip-audit`，验证通过后再发布镜像。
+实际部署的镜像 Digest 需另行记录。
+
+---
+
+Mock 测试不能代替真实租户和客户端验收。更新日期：2026-11-10。

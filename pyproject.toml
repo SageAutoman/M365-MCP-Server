@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77", "wheel"]
+requires = ["setuptools==84.2.1", "wheel==0.48.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,24 +11,25 @@ license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "cryptography>=43,<50",
-    "fastapi>=0.133,<1",
-    "fastmcp==4.0.4",
-    "httpx>=0.28,<1",
-    "msal>=1.31,<2",
-    "pypdf>=5,<7",
-    "python-docx>=1.1,<2",
-    "openpyxl>=3.1,<4",
-    "python-pptx>=1.0,<2",
-    "pydantic>=2.12,<3",
-    "pydantic-settings>=2.6,<3",
-    "PyJWT[crypto]>=2.9,<3",
-    "uvicorn[standard]>=0.34,<1",
+    "cryptography==50.0.2",
+    "fastapi==0.162.2",
+    "fastmcp==4.1.7",
+    "httpx==0.28.1",
+    "msal==1.39.0",
+    "pypdf==7.0.0",
+    "python-docx==1.2.0",
+    "openpyxl==3.1.5",
+    "python-pptx==1.0.2",
+    "pydantic==2.14.3",
+    "pydantic-settings==2.16.2",
+    "PyJWT[crypto]==2.15.1",
+    "uvicorn[standard]==0.54.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.3,<9",
+    "pytest==9.2.0",
+    "pip-audit==2.10.1",
 ]
 
 [project.scripts]

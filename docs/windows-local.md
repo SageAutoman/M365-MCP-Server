@@ -5,9 +5,14 @@
 ## Current status
 
 The first Windows-local implementation is available in
-`windows/M365Mcp.Local` and is built only by GitHub Actions. It is a .NET 8
+`windows/M365Mcp.Local` and is built only by GitHub Actions. It is a .NET 10
 NativeAOT application that publishes as exactly one `m365-mcp.exe`; the target
 PC does not need Python, .NET, Docker, Git, or an installer.
+
+The existing workflow is retained. The separately built
+[Go edition](windows-local-go.md) has its own workflow and artifact names.
+The published v0.1.1 executable continues to use .NET 8; this branch upgrades
+the build target to .NET 10 LTS.
 
 The executable currently provides:
 

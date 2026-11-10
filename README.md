@@ -56,6 +56,13 @@ the checksum and attestation establish provenance but do not override antivirus
 decisions. MD5 and SHA-1 are only identifiers for legacy allowlist forms, not
 authenticity checks; a changed EXE needs new hashes and a new allowlist review.
 
+### Windows local Go executable
+
+The [Go edition](docs/windows-local-go.md) uses its own `windows-local-go`
+workflow to produce standalone AMD64 and ARM64 executables. It supports browser
+sign-in, stdio, authenticated loopback HTTP, and attachment text extraction.
+The existing NativeAOT workflow and release assets remain available.
+
 ## Release and validation status
 
 | Area | Status |
@@ -69,6 +76,7 @@ authenticity checks; a changed EXE needs new hashes and a new allowlist review.
 | Stable `v0.1.1` GitHub release | [Published](https://github.com/sagehou/M365-MCP-Server/releases/tag/v0.1.1) |
 
 GitHub Actions is the only build and test environment for this repository.
+Do not create local test environments, install test dependencies, or run local builds/tests.
 
 ## Remaining work
 
