@@ -5,8 +5,11 @@
 ## 当前状态
 
 首个 Windows 本地实现位于 `windows/M365Mcp.Local`，只通过 GitHub Actions
-构建。它使用 .NET 8 NativeAOT，发布结果严格为一个 `m365-mcp.exe`；用户电脑
+构建。它使用 .NET 10 NativeAOT，发布结果严格为一个 `m365-mcp.exe`；用户电脑
 不需要 Python、.NET、Docker、Git 或安装器。
+
+原有流水线继续保留；新增的 [Go 版](windows-local-go.md)使用独立流水线和产物名。
+已发布的 v0.1.1 EXE 仍使用 .NET 8，本分支将构建目标升级为 .NET 10 LTS。
 
 当前 EXE 已提供：
 

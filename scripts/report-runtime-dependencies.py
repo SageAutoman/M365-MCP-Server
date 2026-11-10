@@ -6,6 +6,7 @@ from importlib import metadata
 
 
 PACKAGES = (
+    ("cryptography", "direct token/cache cryptography"),
     ("fastmcp", "direct"),
     ("fastmcp-slim", "transitive via fastmcp"),
     ("mcp", "transitive via fastmcp"),
@@ -19,6 +20,12 @@ PACKAGES = (
     ("fastapi", "direct ASGI application"),
     ("starlette", "transitive via FastAPI/FastMCP"),
     ("pydantic", "direct models/settings"),
+    ("pydantic-settings", "direct environment configuration"),
+    ("pypdf", "direct PDF extraction"),
+    ("python-docx", "direct DOCX extraction"),
+    ("openpyxl", "direct XLSX extraction"),
+    ("python-pptx", "direct PPTX extraction"),
+    ("uvicorn", "direct ASGI process runner"),
 )
 
 

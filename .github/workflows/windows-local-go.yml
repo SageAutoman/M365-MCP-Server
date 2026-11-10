@@ -1,0 +1,109 @@
+name: windows-local-go
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-local-go-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: native
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: native/go.mod
+          cache-dependency-path: native/go.sum
+      - name: Check formatting
+        shell: bash
+        run: |
+          files="$(gofmt -l .)"
+          if [ -n "$files" ]; then
+            gofmt -d .
+            exit 1
+          fi
+      - name: Verify modules
+        run: go mod verify
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -race -timeout 120s ./...
+      - name: Install vulnerability checker
+        if: runner.os == 'Linux'
+        run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+      - name: Audit Windows dependencies
+        if: runner.os == 'Linux'
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: '0'
+        run: govulncheck ./...
+
+  build-windows-local-go:
+    needs: test
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: native/go.mod
+          cache-dependency-path: native/go.sum
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Build Windows packages
+        run: python scripts/build-windows-go.py
+      - name: Smoke test the packaged single executable
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path 'artifacts/windows-local-go/m365-mcp-windows-local-go-amd64.exe').Path
+          $smokeRoot = Join-Path $env:RUNNER_TEMP 'm365-go-single-file'
+          New-Item -ItemType Directory -Path $smokeRoot -Force | Out-Null
+          $env:TEMP = $smokeRoot
+          $env:TMP = $smokeRoot
+          $env:LOCALAPPDATA = Join-Path $smokeRoot 'local'
+          $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
+          $version = & $exe version
+          if ($LASTEXITCODE -ne 0 -or $version -ne 'm365-mcp-windows-local-go 0.1.1') {
+            throw "Single-file executable failed without a runtime: $version"
+          }
+          $unexpected = @(Get-ChildItem -LiteralPath $smokeRoot -Recurse -File)
+          if ($unexpected.Count -ne 0) {
+            throw "Single-file executable extracted unexpected files: $($unexpected.Name -join ', ')"
+          }
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: windows-local-go-amd64
+          path: artifacts/windows-local-go/m365-mcp-windows-local-go-amd64.exe
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: windows-local-go-arm64
+          path: artifacts/windows-local-go/m365-mcp-windows-local-go-arm64.exe
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: windows-local-go-packages
+          path: |
+            artifacts/windows-local-go/m365-mcp-windows-local-go-*.zip
+            artifacts/windows-local-go/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14

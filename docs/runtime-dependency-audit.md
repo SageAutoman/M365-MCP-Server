@@ -2,63 +2,92 @@
 
 # Runtime dependency audit
 
-This audit records the FastMCP 4 migration dependency boundary. The versions
-are the packages actually resolved by GitHub Actions on 2026-09-17, not an
-estimate derived from version ranges.
+The Python runtime and development dependencies are pinned in `pyproject.toml`;
+`uv.lock` records the complete resolution and distribution hashes. CI and the
+production image both install with `uv sync --frozen`.
 
 ## Resolved versions
 
-| Package | Relationship | Before | After |
-| --- | --- | ---: | ---: |
-| `fastmcp` | direct MCP runtime | 2.14.7 | 4.0.4 |
-| `fastmcp-slim` | transitive via `fastmcp` | not installed | 4.0.4 |
-| `mcp` | transitive via `fastmcp` | 1.30.0 | 2.2.0 |
-| `mcp-types` | transitive via MCP/FastMCP | not installed | 2.2.0 |
-| `authlib` | transitive via FastMCP | 1.8.0 | 1.8.0 |
-| `joserfc` | transitive via FastMCP | 1.7.5 | 1.7.5 |
-| `httpx` | direct Graph/OIDC client | 0.28.1 | 0.28.1 |
-| `httpx2` | transitive FastMCP HTTP stack | not installed | 2.13.0 |
-| `msal` | direct Entra OBO client | 1.38.0 | 1.38.0 |
-| `PyJWT` | direct JWT validation | 2.14.0 | 2.14.0 |
-| `fastapi` | direct ASGI application | 0.141.1 | 0.141.1 |
-| `starlette` | transitive via FastAPI/FastMCP | 1.6.0 | 1.6.0 |
-| `pydantic` | direct models/settings | 2.13.5 | 2.13.5 |
+| Package | Resolved version |
+| --- | ---: |
+| `cryptography` | 50.0.2 |
+| `fastapi` | 0.162.2 |
+| `fastmcp` / `fastmcp-slim` | 4.1.7 |
+| `mcp` / `mcp-types` | 2.3.0 |
+| `authlib` | 1.9.5 |
+| `joserfc` | 1.8.0 |
+| `httpx` | 0.28.1 |
+| `httpx2` | 2.16.0 |
+| `msal` | 1.39.0 |
+| `PyJWT` | 2.15.1 |
+| `pypdf` | 7.0.0 |
+| `python-docx` | 1.2.0 |
+| `openpyxl` | 3.1.5 |
+| `python-pptx` | 1.0.2 |
+| `pydantic` | 2.14.3 |
+| `pydantic-settings` | 2.16.2 |
+| `starlette` | 1.10.0 |
+| `uvicorn` | 0.54.0 |
+| `pytest` | 9.2.0 |
+| `pip-audit` | 2.10.1 |
 
 The project intentionally contains both HTTP client families. Application-owned
 Graph and OpenID Connect traffic continues to use the direct `httpx` dependency.
 FastMCP 4 and MCP SDK v2 use the separate, transitive `httpx2` stack internally.
 They have different owners and neither dependency is an accidental duplicate.
 
-The accepted dependency constraints are `fastmcp==4.0.4`,
-`fastapi>=0.133,<1`, and `pydantic>=2.12,<3`. The exact FastMCP pin keeps the
-runtime migration reproducible while other existing ranges continue to receive
-compatible maintenance releases.
+Build requirements are `setuptools==84.2.1` and `wheel==0.48.0`; installs use
+`uv==0.13.7`. Python remains on the supported 3.12 runtime line.
+The pypdf 7 upgrade removes the old upper bound that blocked
+the fix for [GHSA-59jv-x5x2-gg4c](https://github.com/py-pdf/pypdf/security/advisories/GHSA-59jv-x5x2-gg4c).
 
 ## Compatibility evidence
 
-The migration audit found no project use of removed FastMCP APIs. The existing
-ASGI mount, stateless HTTP configuration, tool error boundary and request
-dependency helper remain exercised through the production application factory.
+CI is configured to run the complete Python suite and `pip-audit --skip-editable`
+with the locked dependencies. This upgrade still requires a successful CI run.
+The production application factory, real ASGI/MCP transport, OAuth refresh
+rotation, and mocked Graph/OBO flows remain covered by the suite. Date schema
+metadata uses Pydantic's supported `json_schema_extra` API.
 
-GitHub Actions covers both protocol eras on that same endpoint:
+The suite covers both protocol eras on that same endpoint:
 
 - Legacy `2025-03-26`: initialize, tools/list, every one of the eleven mail tools,
   sanitized failures and concurrent Alice/Bob identity isolation.
 - Modern `2026-07-28`: server/discover, tools/list and tools/call with request
   metadata and no MCP session identifier.
-- The full unit/integration suite, production Docker image, health endpoint,
-  non-root worker startup and Docker Compose smoke path.
+- The full unit/integration suite, including health, unauthenticated MCP
+  rejection, and isolated extraction checks.
 
-The container smoke test also rejects production startup logs containing the
-known Authlib JOSE and HTTPX migration warnings. It does not hide warnings,
-downgrade Authlib, patch installed packages or retain FastMCP 2.
+CI additionally builds and smoke-tests the production Docker image, non-root
+worker, and Compose configuration. The smoke script rejects known Authlib JOSE
+and HTTPX migration warnings. All builds and tests must run in CI; the editing
+environment must not create test environments or execute local tests.
 
-The before snapshot is [GitHub Actions run 35195153651](https://github.com/sagehou/M365-MCP-Server/actions/runs/35195153651).
-The successful migrated snapshot is [GitHub Actions run 35195810661](https://github.com/sagehou/M365-MCP-Server/actions/runs/35195810661).
+Historical FastMCP 4 migration evidence: [before](https://github.com/sagehou/M365-MCP-Server/actions/runs/35195153651)
+and [after](https://github.com/sagehou/M365-MCP-Server/actions/runs/35195810661).
 
 ## Scope boundary
 
-This phase changes the MCP runtime only. Authentication still requires a bearer
-token supplied by the client, followed by the existing Entra OBO exchange.
-OAuth discovery, dynamic client registration and browser sign-in are not added
-by this migration.
+The Python server retains bearer validation, Entra OBO, and the existing
+feature-flagged OAuth service. The [Windows single-user edition](windows-local-go.md)
+has its own Go module and public-client browser login; it does not embed a
+server credential or replace the multi-user server. Go versions and checksums
+are recorded in `native/go.mod` and `native/go.sum`.
+
+The existing NativeAOT Windows host and workflows are retained. Its SDK/runtime
+target moves from .NET 8 to .NET 10 LTS; it has no direct NuGet dependencies.
+Both Windows workflows use current GitHub Actions versions. The Go artifact
+names include `windows-local-go` and cannot replace the existing Windows assets.
+
+The Go module pins the upstream `x/crypto` fix
+`v0.58.1-0.20261009181718-2f1f834330b2` for
+[GO-2026-5932](https://pkg.go.dev/vuln/GO-2026-5932). That commit removes the
+retired OpenPGP package; the application does not import OpenPGP.
+
+Dependency and lock-file updates require CI verification with
+`uv sync --frozen --extra dev`, the complete tests, and `pip-audit` before images
+are published. Record deployed image digests separately from source locks.
+
+---
+
+Mock tests do not certify real tenant/client behavior. Updated: 2026-11-10.
