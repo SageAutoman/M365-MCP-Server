@@ -5,9 +5,9 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
@@ -38,8 +38,22 @@ func TestWindowsProtectedStorageAndProcessLock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if sddl := descriptor.String(); !strings.Contains(sddl, user.User.Sid.String()) || strings.Count(sddl, "(A;") != 1 {
-		t.Fatal("credential directory grants access beyond the current user")
+	dacl, _, err := descriptor.DACL()
+	if err != nil || dacl == nil || dacl.AceCount != 1 {
+		t.Fatalf("credential directory must have exactly one explicit grant: %s (%v)", descriptor.String(), err)
+	}
+	control, _, err := descriptor.Control()
+	if err != nil || control&windows.SE_DACL_PROTECTED == 0 {
+		t.Fatalf("credential directory inherits permissions: %s (%v)", descriptor.String(), err)
+	}
+	var ace *windows.ACCESS_ALLOWED_ACE
+	if err := windows.GetAce(dacl, 0, &ace); err != nil {
+		t.Fatal(err)
+	}
+	// SDDL may abbreviate a built-in account's SID. Compare the actual SID bytes.
+	grantedSID := (*windows.SID)(unsafe.Pointer(&ace.SidStart))
+	if ace.Header.AceType != windows.ACCESS_ALLOWED_ACE_TYPE || !grantedSID.Equals(user.User.Sid) {
+		t.Fatalf("credential directory grants access beyond the current user: %s", descriptor.String())
 	}
 	plain := []byte("test refresh credential")
 	path := filepath.Join(dir, "cache.dpapi")
