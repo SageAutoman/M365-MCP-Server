@@ -37,15 +37,9 @@ jobs:
           if ($files.Count -ne 1 -or $files[0].Name -ne 'm365-mcp.exe') {
             throw "Expected exactly one m365-mcp.exe output; found: $($files.Name -join ', ')"
           }
-          $versionInfo = $files[0].VersionInfo
-          if (
-            $versionInfo.FileDescription -ne 'M365 MCP Server (Windows Local)' `
-            -or $versionInfo.ProductName -ne 'M365 MCP Server' `
-            -or $versionInfo.LegalCopyright -ne 'Copyright (c) 2026 sagehou' `
-            -or $versionInfo.FileVersion -ne '0.1.1.0'
-          ) {
-            throw "Unexpected Windows version resource: $($versionInfo | Format-List | Out-String)"
-          }
+          [xml]$project = Get-Content 'windows/M365Mcp.Local/M365Mcp.Local.csproj'
+          $projectVersion = $project.Project.PropertyGroup.Version
+          & ./scripts/verify-windows-version-info.ps1 -Path $files[0].FullName -Edition NativeAOT -Version $projectVersion
           $hash = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "sha256=$hash" >> $env:GITHUB_OUTPUT
           "Built m365-mcp.exe SHA-256 $hash"
@@ -53,6 +47,8 @@ jobs:
         shell: pwsh
         run: |
           $exe = (Resolve-Path 'artifacts/windows-x64/m365-mcp.exe').Path
+          [xml]$project = Get-Content 'windows/M365Mcp.Local/M365Mcp.Local.csproj'
+          $expectedVersion = $project.Project.PropertyGroup.Version
           $smokeRoot = Join-Path $env:RUNNER_TEMP "m365-local-smoke"
           New-Item -ItemType Directory -Path $smokeRoot -Force | Out-Null
           $env:TEMP = $smokeRoot
@@ -61,7 +57,7 @@ jobs:
           $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
 
           $version = & $exe --version
-          if ($LASTEXITCODE -ne 0 -or $version -ne 'm365-mcp 0.1.1') {
+          if ($LASTEXITCODE -ne 0 -or $version -ne "m365-mcp $expectedVersion") {
             throw "Version option failed: $version"
           }
 

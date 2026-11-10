@@ -2,16 +2,16 @@ name: windows-local-go
 
 on:
   workflow_dispatch:
+  workflow_call:
   pull_request:
   push:
     branches: [main]
-    tags: ['v*.*.*']
 
 permissions:
   contents: read
 
 concurrency:
-  group: windows-local-go-${{ github.ref }}
+  group: windows-local-go-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -70,10 +70,18 @@ jobs:
           check-latest: true
       - name: Build Windows packages
         run: python scripts/build-windows-go.py
+      - name: Verify Windows file details for both architectures
+        shell: pwsh
+        run: |
+          $expectedVersion = python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])'
+          foreach ($arch in @('amd64', 'arm64')) {
+            & ./scripts/verify-windows-version-info.ps1 -Path "artifacts/windows-local-go/m365-mcp-windows-local-go-$arch.exe" -Edition Go -Version $expectedVersion
+          }
       - name: Smoke test the packaged single executable
         shell: pwsh
         run: |
           $exe = (Resolve-Path 'artifacts/windows-local-go/m365-mcp-windows-local-go-amd64.exe').Path
+          $expectedVersion = python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])'
           $smokeRoot = Join-Path $env:RUNNER_TEMP 'm365-go-single-file'
           New-Item -ItemType Directory -Path $smokeRoot -Force | Out-Null
           $env:TEMP = $smokeRoot
@@ -81,7 +89,7 @@ jobs:
           $env:LOCALAPPDATA = Join-Path $smokeRoot 'local'
           $env:PATH = "$env:SystemRoot\System32;$env:SystemRoot"
           $version = & $exe version
-          if ($LASTEXITCODE -ne 0 -or $version -ne 'm365-mcp-windows-local-go 0.1.1') {
+          if ($LASTEXITCODE -ne 0 -or $version -ne "m365-mcp-windows-local-go $expectedVersion") {
             throw "Single-file executable failed without a runtime: $version"
           }
           $unexpected = @(Get-ChildItem -LiteralPath $smokeRoot -Recurse -File)

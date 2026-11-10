@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "m365-mcp-server"
-version = "0.1.1"
+version = "0.1.2"
 description = "An enterprise Microsoft 365 MCP server based on Microsoft Graph."
 readme = "README.md"
 license = "MIT"

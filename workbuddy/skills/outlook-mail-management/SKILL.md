@@ -6,7 +6,7 @@ description: 对明确指定的 Outlook 邮件执行已读、归档、移动和�
 description_zh: 对明确指定的 Outlook 邮件执行已读、归档、移动和分类操作。
 description_en: Mark, archive, move, or categorize explicitly selected Outlook messages.
 allowed-tools: mail_mark_read, mail_archive, mail_move, mail_set_category
-version: 0.1.1
+version: 0.1.2
 author: M365 MCP Server contributors
 ---
 

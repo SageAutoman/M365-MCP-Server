@@ -13,7 +13,7 @@ def test_health_endpoint() -> None:
     assert response.json() == {
         "status": "ok",
         "service": "m365-mcp-server",
-        "version": "0.1.1",
+        "version": "0.1.2",
     }
     assert healthz_response.status_code == 200
     assert healthz_response.json() == response.json()

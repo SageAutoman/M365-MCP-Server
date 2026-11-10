@@ -19,7 +19,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-const version = "0.1.1"
+const version = "0.1.2"
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {

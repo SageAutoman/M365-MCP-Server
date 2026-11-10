@@ -9,11 +9,36 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import tomllib
 import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
 NATIVE = ROOT / "native"
+VERSION_RESOURCE_TOOL = "github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.7.0"
+
+
+def version_resource(version: str) -> dict:
+    major, minor, patch = map(int, version.split("."))
+    numbers = {"Major": major, "Minor": minor, "Patch": patch, "Build": 0}
+    return {
+        "FixedFileInfo": {
+            "FileVersion": numbers, "ProductVersion": numbers,
+            "FileFlagsMask": "3f", "FileFlags": "00", "FileOS": "040004", "FileType": "01",
+        },
+        "StringFileInfo": {
+            "CompanyName": "sagehou",
+            "FileDescription": "M365 MCP Server (Windows Local Go)",
+            "FileVersion": version + ".0",
+            "InternalName": "m365-mcp-windows-local-go",
+            "LegalCopyright": "Copyright (c) 2026 sagehou",
+            "OriginalFilename": "m365-mcp-windows-local-go.exe",
+            "ProductName": "M365 MCP Server",
+            "ProductVersion": version,
+            "Comments": "Windows single-user Microsoft 365 mail MCP server, implemented in Go.",
+        },
+        "VarFileInfo": {"Translation": {"LangID": "0409", "CharsetID": "04B0"}},
+    }
 
 
 def json_stream(value: str):
@@ -59,13 +84,26 @@ def main() -> None:
         raise SystemExit("Install the Go version declared in native/go.mod and add go to PATH.")
     output = ROOT / "artifacts" / "windows-local-go"
     output.mkdir(parents=True, exist_ok=True)
+    with (ROOT / "pyproject.toml").open("rb") as file:
+        version = tomllib.load(file)["project"]["version"]
+    resource_config = output / "versioninfo.json"
+    resource_config.write_text(json.dumps(version_resource(version), indent=2) + "\n", encoding="utf-8")
     checksums = []
     for arch in args.arch or ("amd64", "arm64"):
         environment = {**os.environ, "GOOS": "windows", "GOARCH": arch, "CGO_ENABLED": "0"}
         name = f"m365-mcp-windows-local-go-{arch}"
         executable = output / f"{name}.exe"
-        subprocess.run([go, "build", "-trimpath", "-buildvcs=false", "-o", str(executable), "."],
-                       cwd=NATIVE, env=environment, check=True)
+        resource = NATIVE / f"versioninfo_windows_{arch}.syso"
+        # The generator runs on the CI host; only its COFF output targets Windows.
+        subprocess.run([
+            go, "run", VERSION_RESOURCE_TOOL, "-64", f"-arm={str(arch == 'arm64').lower()}",
+            "-o", str(resource), str(resource_config),
+        ], cwd=NATIVE, check=True)
+        try:
+            subprocess.run([go, "build", "-trimpath", "-buildvcs=false", "-o", str(executable), "."],
+                           cwd=NATIVE, env=environment, check=True)
+        finally:
+            resource.unlink(missing_ok=True)
         notices = dependency_notices(go, environment)
         archive = output / f"{name}.zip"
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as package:

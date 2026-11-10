@@ -111,6 +111,10 @@ CI 成功后，下载 `windows-local-go-amd64` 或 `windows-local-go-arm64` 获�
 下载 `windows-local-go-packages` 获取 ZIP 包和校验和。工作流覆盖 Linux、Windows 测试，包括
 Windows DPAPI、进程互斥和隔离 Worker。禁止在此编辑环境构建或测试。
 
+构建仅在 CI 使用 `goversioninfo` v1.7.0，为两个架构嵌入资源管理器文件详细信息，
+产品/文件版本取自 `pyproject.toml`。Tag 发布流水线复用同一构建，核对校验和，
+将 Go EXE、ZIP 与原有 NativeAOT EXE 一起发布。
+
 ---
 
 程序尚未代码签名。Go 不保证更少的杀软检测，SmartScreen 信誉、代码签名和误报申诉仍需按

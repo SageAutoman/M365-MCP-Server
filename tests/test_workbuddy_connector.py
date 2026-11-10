@@ -26,7 +26,7 @@ def test_connector_uses_official_oauth_package_shape_without_credentials() -> No
     assert metadata["source"] == "sagehou-m365-mcp-server"
     assert re.fullmatch(r"[a-z0-9-]+", metadata["source"])
     assert metadata["type"] == "mcp"
-    assert metadata["version"] == "0.1.1"
+    assert metadata["version"] == "0.1.2"
     assert metadata["minWorkbuddyVersion"] == "4.24.0"
     assert len(metadata["examples_zh"]) >= 2
     assert len(metadata["examples_en"]) >= 2
@@ -66,7 +66,7 @@ def test_connector_skills_expose_only_their_scoped_mail_tools() -> None:
     for name, tools in expected.items():
         frontmatter = _frontmatter(skills_root / name / "SKILL.md")
         assert frontmatter["name"] == name
-        assert frontmatter["version"] == "0.1.1"
+        assert frontmatter["version"] == "0.1.2"
         assert frontmatter["description_zh"]
         assert frontmatter["description_en"]
         assert {tool.strip() for tool in frontmatter["allowed-tools"].split(",")} == tools

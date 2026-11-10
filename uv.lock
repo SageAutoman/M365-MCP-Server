@@ -678,7 +678,7 @@ wheels = [
 
 [[package]]
 name = "m365-mcp-server"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "cryptography" },

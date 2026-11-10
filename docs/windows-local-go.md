@@ -131,6 +131,11 @@ guides, and third-party license notices. After CI succeeds, download
 Windows DPAPI, process locking, and isolated workers. Do not build or test in
 the editing environment.
 
+The build uses `goversioninfo` v1.7.0 only in CI to embed Explorer file details
+for both architectures. Product/file versions come from `pyproject.toml`.
+The tag release workflow reuses this same build, verifies checksums, and
+publishes the Go EXEs/ZIPs alongside the existing NativeAOT EXE.
+
 ---
 
 The executable is unsigned. Go does not guarantee fewer antivirus detections;

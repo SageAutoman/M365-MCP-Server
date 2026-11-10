@@ -6,7 +6,7 @@ description: 创建纯文本 Outlook 草稿并添加附件；交互发送需逐�
 description_zh: 创建纯文本 Outlook 草稿并添加附件；交互发送需逐封确认，受限自动化可使用用户预授权。
 description_en: Create plain-text Outlook drafts with attachments; require per-message confirmation or bounded automation authorization before sending.
 allowed-tools: mail_create_draft, mail_prepare_attachment_push, mail_add_draft_attachment, mail_list_attachments, mail_send_draft, Bash
-version: 0.1.1
+version: 0.1.2
 author: M365 MCP Server contributors
 ---
 

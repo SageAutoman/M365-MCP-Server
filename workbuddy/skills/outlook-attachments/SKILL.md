@@ -6,7 +6,7 @@ description: 列出邮件附件，提取受支持文件的有界文本，或生�
 description_zh: 列出邮件附件，提取受支持文件的有界文本，或生成短时单次下载链接。
 description_en: List mail attachments, extract bounded text, or create a short-lived single-use download URL.
 allowed-tools: mail_list_attachments, mail_read_attachment, mail_download_attachment
-version: 0.1.1
+version: 0.1.2
 author: M365 MCP Server contributors
 ---
 

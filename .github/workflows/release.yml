@@ -81,16 +81,8 @@ jobs:
           if ($files.Count -ne 1 -or $files[0].Name -ne 'm365-mcp.exe') {
             throw "Expected exactly one m365-mcp.exe output; found: $($files.Name -join ', ')"
           }
-          $expectedVersion = ($env:RELEASE_TAG -replace '^v', '') + '.0'
-          $versionInfo = $files[0].VersionInfo
-          if (
-            $versionInfo.FileDescription -ne 'M365 MCP Server (Windows Local)' `
-            -or $versionInfo.ProductName -ne 'M365 MCP Server' `
-            -or $versionInfo.LegalCopyright -ne 'Copyright (c) 2026 sagehou' `
-            -or $versionInfo.FileVersion -ne $expectedVersion
-          ) {
-            throw "Unexpected Windows version resource: $($versionInfo | Format-List | Out-String)"
-          }
+          $expectedVersion = $env:RELEASE_TAG -replace '^v', ''
+          & ./scripts/verify-windows-version-info.ps1 -Path $files[0].FullName -Edition NativeAOT -Version $expectedVersion
           $hash = (Get-FileHash -LiteralPath $files[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "Built m365-mcp.exe SHA-256 $hash"
       - name: Smoke test exact Windows release candidate
@@ -172,10 +164,17 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  windows-go:
+    needs: test
+    uses: ./.github/workflows/windows-local-go.yml
+    permissions:
+      contents: read
+
   attest-windows:
     needs:
       - test
       - windows
+      - windows-go
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -188,19 +187,27 @@ jobs:
         with:
           name: m365-mcp-windows-x64-release
           path: release-assets
+      - name: Download Go Windows release assets
+        uses: actions/download-artifact@v8.0.2
+        with:
+          pattern: windows-local-go-*
+          merge-multiple: true
+          path: release-assets
       - name: Verify Windows checksum
         run: |
           cd release-assets
           sha256sum -c m365-mcp-windows-x64.exe.sha256
+          sha256sum -c SHA256SUMS.txt
       - name: Attest Windows release executable
         uses: actions/attest-build-provenance@v4.2.2
         with:
-          subject-path: release-assets/m365-mcp-windows-x64.exe
+          subject-path: release-assets/*.exe
 
   publish:
     needs:
       - test
       - windows
+      - windows-go
       - attest-windows
     runs-on: ubuntu-24.04
     permissions:
@@ -213,10 +220,17 @@ jobs:
         with:
           name: m365-mcp-windows-x64-release
           path: release-assets
+      - name: Download Go Windows release assets
+        uses: actions/download-artifact@v8.0.2
+        with:
+          pattern: windows-local-go-*
+          merge-multiple: true
+          path: release-assets
       - name: Verify Windows checksum
         run: |
           cd release-assets
           sha256sum -c m365-mcp-windows-x64.exe.sha256
+          sha256sum -c SHA256SUMS.txt
       - name: Add exact Windows asset hashes to release notes
         env:
           RELEASE_TAG: ${{ github.ref_name }}
@@ -278,6 +292,11 @@ jobs:
           gh release create "$RELEASE_TAG" \
             release-assets/m365-mcp-windows-x64.exe \
             release-assets/m365-mcp-windows-x64.exe.sha256 \
+            release-assets/m365-mcp-windows-local-go-amd64.exe \
+            release-assets/m365-mcp-windows-local-go-arm64.exe \
+            release-assets/m365-mcp-windows-local-go-amd64.zip \
+            release-assets/m365-mcp-windows-local-go-arm64.zip \
+            release-assets/SHA256SUMS.txt \
             release-assets/LICENSE \
             --verify-tag \
             --title "M365 MCP Server $RELEASE_TAG" \

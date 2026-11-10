@@ -6,7 +6,7 @@ description: 搜索并按需读取当前登录用户的 Outlook 邮件。
 description_zh: 搜索并按需读取当前登录用户的 Outlook 邮件。
 description_en: Search and selectively read the signed-in user's Outlook mail.
 allowed-tools: mail_search, mail_get
-version: 0.1.1
+version: 0.1.2
 author: M365 MCP Server contributors
 ---
 
